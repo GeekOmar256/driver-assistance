@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>VisionGuard - Traffic Sign Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>VisionGuard</h1>
+    <p>Upload a video or use your webcam to detect traffic signs in real time.</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="panel">
+        <h2>Upload a video</h2>
+        <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+          <input type="file" name="video" accept=".mp4,.avi,.mov,.mkv" required>
+          <button type="submit">Process Video</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Use your webcam</h2>
+        <button id="webcamBtn" type="button">Start Webcam</button>
+        <button id="stopBtn" type="button" disabled>Stop</button>
+      </div>
+    </section>
+
+    <section class="stream-container">
+      <img id="stream" alt="Detection output will appear here">
+    </section>
+  </main>
+
+  <script>
+    const stream = document.getElementById("stream");
+    const webcamBtn = document.getElementById("webcamBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const uploadedFilename = "{{ uploaded_filename|default('') }}";
+
+    function startWebcam() {
+      stream.src = "/webcam_feed?t=" + Date.now();
+      webcamBtn.disabled = true;
+      stopBtn.disabled = false;
+    }
+
+    function stopStream() {
+      stream.src = "";
+      webcamBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+
+    webcamBtn.addEventListener("click", startWebcam);
+    stopBtn.addEventListener("click", stopStream);
+
+    if (uploadedFilename) {
+      stream.src = "/video_feed/" + uploadedFilename;
+      stopBtn.disabled = false;
+    }
+  </script>
+</body>
+</html>

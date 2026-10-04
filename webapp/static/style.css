@@ -1,0 +1,94 @@
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --accent: #22c55e;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 24px 32px 8px;
+}
+
+header h1 {
+  margin: 0;
+  color: var(--accent);
+}
+
+header p {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+main {
+  padding: 16px 32px 48px;
+}
+
+.controls {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 20px;
+  flex: 1 1 280px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+button {
+  background: var(--accent);
+  color: #0f172a;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+button:disabled {
+  background: #334155;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+input[type="file"] {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.stream-container {
+  display: flex;
+  justify-content: center;
+  background: #000;
+  border-radius: 10px;
+  min-height: 360px;
+  align-items: center;
+}
+
+#stream {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 10px;
+}
