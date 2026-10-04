@@ -13,12 +13,6 @@ instance/
 # YOLO weights (auto-downloaded by ultralytics on first run)
 *.pt
 
-# User-uploaded / test videos
-webapp/uploads/*
-!webapp/uploads/.gitkeep
-webapp/videos/*
-!webapp/videos/.gitkeep
-
 # OS
 .DS_Store
 Thumbs.db
