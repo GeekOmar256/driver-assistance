@@ -3,33 +3,98 @@
 <head>
   <meta charset="utf-8">
   <title>VisionGuard - Traffic Sign Detection</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem("vg-theme");
+      if (saved === "light" || saved === "dark") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
-    <h1>VisionGuard</h1>
-    <p>Upload a video or use your webcam to detect traffic signs in real time.</p>
+    <div class="header-row">
+      <div>
+        <h1>VisionGuard</h1>
+        <p>Upload a video or use your webcam to detect road objects in real time.</p>
+      </div>
+      <button id="themeBtn" type="button" class="theme-toggle" aria-label="Toggle light/dark mode">
+        <span id="themeIcon">&#9728;</span> <span id="themeLabel">Light</span>
+      </button>
+    </div>
   </header>
 
-  <main>
-    <section class="controls">
-      <div class="panel">
-        <h2>Upload a video</h2>
-        <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
-          <input type="file" name="video" accept=".mp4,.avi,.mov,.mkv" required>
-          <button type="submit">Process Video</button>
-        </form>
+  <main class="layout">
+    <aside id="controlsColumn" class="controls-column">
+      <div class="panel" data-card="upload">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Upload a video</h2>
+        </div>
+        <div class="panel-body">
+          <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="video" accept=".mp4,.avi,.mov,.mkv" required>
+            <button type="submit">Process Video</button>
+          </form>
+        </div>
       </div>
 
-      <div class="panel">
-        <h2>Use your webcam</h2>
-        <button id="webcamBtn" type="button">Start Webcam</button>
-        <button id="stopBtn" type="button" disabled>Stop</button>
+      <div class="panel" data-card="webcam">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Use your webcam</h2>
+        </div>
+        <div class="panel-body">
+          <div class="btn-row">
+            <button id="webcamBtn" type="button">Start Webcam</button>
+            <button id="stopBtn" type="button" disabled>Stop</button>
+          </div>
+        </div>
       </div>
-    </section>
 
-    <section class="stream-container">
-      <img id="stream" alt="Detection output will appear here">
+      <div class="panel" data-card="classes">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Detect classes</h2>
+        </div>
+        <div class="panel-body">
+          <div class="class-actions">
+            <button id="selectAllBtn" type="button" class="link-btn">Select all</button>
+            <button id="selectNoneBtn" type="button" class="link-btn">Clear</button>
+          </div>
+          <div id="classList" class="class-list">Loading classes...</div>
+          <button id="applyBtn" type="button">Apply to current stream</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="video-column">
+      <div class="alerts-panel">
+        <h2>Driver Alerts</h2>
+        <div id="alertsList" class="alerts-list">
+          <div class="alert-item alert-empty">
+            <span class="alert-icon">&#9989;</span>
+            <span>Road clear - no notable objects detected</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="video-panel">
+        <div class="video-toolbar">
+          <button id="playPauseBtn" type="button" class="icon-btn" disabled aria-label="Play">
+            <span id="playPauseIcon">&#9654;</span>
+          </button>
+          <button id="replayBtn" type="button" class="icon-btn" disabled aria-label="Replay video" title="Replay from the start">
+            <span>&#8635;</span>
+          </button>
+          <span id="streamStatus" class="stream-status">No stream active</span>
+        </div>
+        <div class="stream-container">
+          <img id="stream" alt="Detection output will appear here">
+        </div>
+      </div>
     </section>
   </main>
 
@@ -37,27 +102,301 @@
     const stream = document.getElementById("stream");
     const webcamBtn = document.getElementById("webcamBtn");
     const stopBtn = document.getElementById("stopBtn");
+    const applyBtn = document.getElementById("applyBtn");
+    const classList = document.getElementById("classList");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const selectNoneBtn = document.getElementById("selectNoneBtn");
+    const themeBtn = document.getElementById("themeBtn");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const playPauseIcon = document.getElementById("playPauseIcon");
+    const replayBtn = document.getElementById("replayBtn");
+    const streamStatus = document.getElementById("streamStatus");
+    const alertsList = document.getElementById("alertsList");
+    const controlsColumn = document.getElementById("controlsColumn");
     const uploadedFilename = "{{ uploaded_filename|default('') }}";
 
+    let currentMode = null; // "webcam" | "video"
+    let isPaused = false;
+    let videoEnded = false;
+    let pollTimer = null;
+
+    // ---- Theme ----
+    function currentTheme() {
+      return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    }
+
+    function applyThemeButton() {
+      if (currentTheme() === "light") {
+        themeIcon.textContent = "☽";
+        themeLabel.textContent = "Dark";
+      } else {
+        themeIcon.textContent = "☀";
+        themeLabel.textContent = "Light";
+      }
+    }
+
+    themeBtn.addEventListener("click", function () {
+      const next = currentTheme() === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("vg-theme", next); } catch (e) {}
+      applyThemeButton();
+    });
+
+    applyThemeButton();
+
+    // ---- Draggable control cards ----
+    let dragEl = null;
+
+    function getDragAfterElement(container, y) {
+      const panels = Array.from(container.querySelectorAll(".panel:not(.dragging)"));
+      return panels.reduce(function (closest, child) {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        }
+        return closest;
+      }, { offset: -Infinity, element: null }).element;
+    }
+
+    function saveCardOrder() {
+      const order = Array.from(controlsColumn.querySelectorAll(".panel")).map(function (p) {
+        return p.dataset.card;
+      });
+      try { localStorage.setItem("vg-card-order", JSON.stringify(order)); } catch (e) {}
+    }
+
+    function restoreCardOrder() {
+      try {
+        const order = JSON.parse(localStorage.getItem("vg-card-order") || "null");
+        if (!order) return;
+        order.forEach(function (key) {
+          const el = controlsColumn.querySelector('[data-card="' + key + '"]');
+          if (el) controlsColumn.appendChild(el);
+        });
+      } catch (e) {}
+    }
+
+    restoreCardOrder();
+
+    controlsColumn.querySelectorAll(".panel-handle").forEach(function (handle) {
+      handle.addEventListener("dragstart", function () {
+        dragEl = handle.closest(".panel");
+        dragEl.classList.add("dragging");
+      });
+      handle.addEventListener("dragend", function () {
+        if (dragEl) dragEl.classList.remove("dragging");
+        dragEl = null;
+        saveCardOrder();
+      });
+    });
+
+    controlsColumn.addEventListener("dragover", function (e) {
+      if (!dragEl) return;
+      e.preventDefault();
+      const after = getDragAfterElement(controlsColumn, e.clientY);
+      if (after == null) {
+        controlsColumn.appendChild(dragEl);
+      } else {
+        controlsColumn.insertBefore(dragEl, after);
+      }
+    });
+
+    // ---- Class selection ----
+    function selectedClasses() {
+      return Array.from(classList.querySelectorAll("input[type=checkbox]:checked"))
+        .map(function (cb) { return cb.value; });
+    }
+
+    function saveSelection() {
+      try { localStorage.setItem("vg-classes", JSON.stringify(selectedClasses())); } catch (e) {}
+    }
+
+    function loadSavedSelection() {
+      try {
+        const raw = localStorage.getItem("vg-classes");
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function renderClasses(names) {
+      const saved = loadSavedSelection();
+      classList.innerHTML = "";
+      names.forEach(function (name) {
+        const id = "cls-" + name.replace(/\s+/g, "_");
+        const checked = saved ? saved.indexOf(name) !== -1 : true;
+        const wrapper = document.createElement("label");
+        wrapper.className = "class-item";
+        wrapper.innerHTML =
+          '<input type="checkbox" id="' + id + '" value="' + name + '"' + (checked ? " checked" : "") + '> ' +
+          '<span>' + name + '</span>';
+        classList.appendChild(wrapper);
+      });
+      classList.addEventListener("change", saveSelection);
+      saveSelection();
+    }
+
+    fetch("/api/classes")
+      .then(function (r) { return r.json(); })
+      .then(function (names) {
+        renderClasses(names);
+        if (uploadedFilename) {
+          startVideoStream();
+        }
+      })
+      .catch(function () { classList.textContent = "Could not load class list."; });
+
+    selectAllBtn.addEventListener("click", function () {
+      classList.querySelectorAll("input[type=checkbox]").forEach(function (cb) { cb.checked = true; });
+      saveSelection();
+    });
+
+    selectNoneBtn.addEventListener("click", function () {
+      classList.querySelectorAll("input[type=checkbox]").forEach(function (cb) { cb.checked = false; });
+      saveSelection();
+    });
+
+    function classesQueryParam() {
+      return "classes=" + encodeURIComponent(selectedClasses().join(","));
+    }
+
+    // ---- Driver alerts ----
+    function renderAlerts(items) {
+      if (!items.length) {
+        alertsList.innerHTML =
+          '<div class="alert-item alert-empty"><span class="alert-icon">✅</span>' +
+          '<span>Road clear - no notable objects detected</span></div>';
+        return;
+      }
+      alertsList.innerHTML = items.map(function (a) {
+        return '<div class="alert-item ' + a.kind + '">' +
+          '<span class="alert-icon">' + a.icon + '</span><span>' + a.text + '</span></div>';
+      }).join("");
+    }
+
+    function pollAlerts() {
+      fetch("/api/latest_detections")
+        .then(function (r) { return r.json(); })
+        .then(renderAlerts)
+        .catch(function () {});
+    }
+
+    function pollStreamStatus() {
+      if (currentMode !== "video" || videoEnded) return;
+      fetch("/api/stream_status")
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.active && currentMode === "video" && !videoEnded) {
+            handleVideoEnded();
+          }
+        })
+        .catch(function () {});
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(function () {
+        pollAlerts();
+        pollStreamStatus();
+      }, 700);
+      pollAlerts();
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      renderAlerts([]);
+    }
+
+    function handleVideoEnded() {
+      videoEnded = true;
+      isPaused = false;
+      playPauseBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "Video ended - click Replay to watch again";
+    }
+
+    // ---- Play / pause ----
+    function setPlayPauseUI() {
+      playPauseIcon.textContent = isPaused ? "▶" : "⏸";
+      playPauseBtn.setAttribute("aria-label", isPaused ? "Play" : "Pause");
+    }
+
+    playPauseBtn.addEventListener("click", function () {
+      fetch("/api/toggle_pause", { method: "POST" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          isPaused = data.paused;
+          setPlayPauseUI();
+          streamStatus.textContent = isPaused
+            ? "Paused"
+            : (currentMode === "webcam" ? "Live (webcam)" : "Playing video");
+        });
+    });
+
+    // ---- Streams ----
     function startWebcam() {
-      stream.src = "/webcam_feed?t=" + Date.now();
+      currentMode = "webcam";
+      isPaused = false;
+      videoEnded = false;
+      stream.src = "/webcam_feed?" + classesQueryParam() + "&t=" + Date.now();
       webcamBtn.disabled = true;
       stopBtn.disabled = false;
+      playPauseBtn.disabled = false;
+      replayBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "Live (webcam)";
+      startPolling();
+    }
+
+    function startVideoStream() {
+      currentMode = "video";
+      isPaused = false;
+      videoEnded = false;
+      stream.src = "/video_feed/" + uploadedFilename + "?" + classesQueryParam() + "&t=" + Date.now();
+      stopBtn.disabled = false;
+      playPauseBtn.disabled = false;
+      replayBtn.disabled = false;
+      setPlayPauseUI();
+      streamStatus.textContent = "Playing video";
+      startPolling();
     }
 
     function stopStream() {
+      currentMode = null;
+      isPaused = false;
+      videoEnded = false;
+      navigator.sendBeacon ? navigator.sendBeacon("/api/resume") : fetch("/api/resume", { method: "POST" });
       stream.src = "";
       webcamBtn.disabled = false;
       stopBtn.disabled = true;
+      playPauseBtn.disabled = true;
+      replayBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "No stream active";
+      stopPolling();
     }
 
     webcamBtn.addEventListener("click", startWebcam);
     stopBtn.addEventListener("click", stopStream);
+    replayBtn.addEventListener("click", function () {
+      if (uploadedFilename) startVideoStream();
+    });
 
-    if (uploadedFilename) {
-      stream.src = "/video_feed/" + uploadedFilename;
-      stopBtn.disabled = false;
-    }
+    applyBtn.addEventListener("click", function () {
+      if (currentMode === "webcam") {
+        startWebcam();
+      } else if (currentMode === "video" && uploadedFilename) {
+        startVideoStream();
+      }
+    });
+
+    window.addEventListener("beforeunload", function () {
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/resume");
+    });
   </script>
 </body>
 </html>
