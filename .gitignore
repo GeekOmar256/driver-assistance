@@ -16,3 +16,18 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+# Downloaded training datasets
+datasets/
+.venv-roboflow/
+.env
+.env.*
+!.env.example
+inference/results/
+training_runs/
+
+# FYP2 report drafts contain student names and IDs - keep off the public repo
+fyp2_report_work/
+FYP2_Final_Report_VisionGuard.docx
+FYP2_Final_Report_VisionGuard.pdf
+Final Report FYP2.docx
