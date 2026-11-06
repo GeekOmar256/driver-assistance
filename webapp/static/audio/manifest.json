@@ -1,0 +1,429 @@
+{
+  "sound enabled": {
+    "file": "sound_enabled.mp3",
+    "text": "Sound alerts enabled.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bicycle": {
+    "file": "bicycle.mp3",
+    "text": "Bicycle detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bicycle:left": {
+    "file": "bicycle_left.mp3",
+    "text": "Bicycle detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bicycle:right": {
+    "file": "bicycle_right.mp3",
+    "text": "Bicycle detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bicycle:ahead": {
+    "file": "bicycle_ahead.mp3",
+    "text": "Bicycle detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "car": {
+    "file": "car.mp3",
+    "text": "Car detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "car:left": {
+    "file": "car_left.mp3",
+    "text": "Car detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "car:right": {
+    "file": "car_right.mp3",
+    "text": "Car detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "car:ahead": {
+    "file": "car_ahead.mp3",
+    "text": "Car detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "motorcycle": {
+    "file": "motorcycle.mp3",
+    "text": "Motorcycle detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "motorcycle:left": {
+    "file": "motorcycle_left.mp3",
+    "text": "Motorcycle detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "motorcycle:right": {
+    "file": "motorcycle_right.mp3",
+    "text": "Motorcycle detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "motorcycle:ahead": {
+    "file": "motorcycle_ahead.mp3",
+    "text": "Motorcycle detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bus": {
+    "file": "bus.mp3",
+    "text": "Bus detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bus:left": {
+    "file": "bus_left.mp3",
+    "text": "Bus detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bus:right": {
+    "file": "bus_right.mp3",
+    "text": "Bus detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "bus:ahead": {
+    "file": "bus_ahead.mp3",
+    "text": "Bus detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "truck": {
+    "file": "truck.mp3",
+    "text": "Truck detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "truck:left": {
+    "file": "truck_left.mp3",
+    "text": "Truck detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "truck:right": {
+    "file": "truck_right.mp3",
+    "text": "Truck detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "truck:ahead": {
+    "file": "truck_ahead.mp3",
+    "text": "Truck detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "traffic light": {
+    "file": "traffic_light.mp3",
+    "text": "Traffic light detected. Check the signal.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "traffic light:left": {
+    "file": "traffic_light_left.mp3",
+    "text": "Traffic light detected on your left. Check the signal.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "traffic light:right": {
+    "file": "traffic_light_right.mp3",
+    "text": "Traffic light detected on your right. Check the signal.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "traffic light:ahead": {
+    "file": "traffic_light_ahead.mp3",
+    "text": "Traffic light detected ahead. Check the signal.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "stop sign": {
+    "file": "stop_sign.mp3",
+    "text": "Stop sign detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "stop sign:left": {
+    "file": "stop_sign_left.mp3",
+    "text": "Stop sign detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "stop sign:right": {
+    "file": "stop_sign_right.mp3",
+    "text": "Stop sign detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "stop sign:ahead": {
+    "file": "stop_sign_ahead.mp3",
+    "text": "Stop sign detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yield sign": {
+    "file": "yield_sign.mp3",
+    "text": "Yield sign detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yield sign:left": {
+    "file": "yield_sign_left.mp3",
+    "text": "Yield sign detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yield sign:right": {
+    "file": "yield_sign_right.mp3",
+    "text": "Yield sign detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yield sign:ahead": {
+    "file": "yield_sign_ahead.mp3",
+    "text": "Yield sign detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "no entry": {
+    "file": "no_entry.mp3",
+    "text": "No entry sign detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "no entry:left": {
+    "file": "no_entry_left.mp3",
+    "text": "No entry sign detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "no entry:right": {
+    "file": "no_entry_right.mp3",
+    "text": "No entry sign detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "no entry:ahead": {
+    "file": "no_entry_ahead.mp3",
+    "text": "No entry sign detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 40": {
+    "file": "speed_limit_40.mp3",
+    "text": "Speed limit forty kilometers per hour.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 40:left": {
+    "file": "speed_limit_40_left.mp3",
+    "text": "Speed limit forty kilometers per hour on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 40:right": {
+    "file": "speed_limit_40_right.mp3",
+    "text": "Speed limit forty kilometers per hour on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 40:ahead": {
+    "file": "speed_limit_40_ahead.mp3",
+    "text": "Speed limit forty kilometers per hour ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 60": {
+    "file": "speed_limit_60.mp3",
+    "text": "Speed limit sixty kilometers per hour.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 60:left": {
+    "file": "speed_limit_60_left.mp3",
+    "text": "Speed limit sixty kilometers per hour on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 60:right": {
+    "file": "speed_limit_60_right.mp3",
+    "text": "Speed limit sixty kilometers per hour on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 60:ahead": {
+    "file": "speed_limit_60_ahead.mp3",
+    "text": "Speed limit sixty kilometers per hour ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 80": {
+    "file": "speed_limit_80.mp3",
+    "text": "Speed limit eighty kilometers per hour.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 80:left": {
+    "file": "speed_limit_80_left.mp3",
+    "text": "Speed limit eighty kilometers per hour on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 80:right": {
+    "file": "speed_limit_80_right.mp3",
+    "text": "Speed limit eighty kilometers per hour on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "speed limit 80:ahead": {
+    "file": "speed_limit_80_ahead.mp3",
+    "text": "Speed limit eighty kilometers per hour ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "red traffic light": {
+    "file": "red_traffic_light.mp3",
+    "text": "Red traffic light detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "red traffic light:left": {
+    "file": "red_traffic_light_left.mp3",
+    "text": "Red traffic light detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "red traffic light:right": {
+    "file": "red_traffic_light_right.mp3",
+    "text": "Red traffic light detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "red traffic light:ahead": {
+    "file": "red_traffic_light_ahead.mp3",
+    "text": "Red traffic light detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yellow traffic light": {
+    "file": "yellow_traffic_light.mp3",
+    "text": "Yellow traffic light detected.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yellow traffic light:left": {
+    "file": "yellow_traffic_light_left.mp3",
+    "text": "Yellow traffic light detected on your left.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yellow traffic light:right": {
+    "file": "yellow_traffic_light_right.mp3",
+    "text": "Yellow traffic light detected on your right.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "yellow traffic light:ahead": {
+    "file": "yellow_traffic_light_ahead.mp3",
+    "text": "Yellow traffic light detected ahead.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "green traffic light": {
+    "file": "green_traffic_light.mp3",
+    "text": "Green traffic light detected. Check before proceeding.",
+    "direction": null,
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "green traffic light:left": {
+    "file": "green_traffic_light_left.mp3",
+    "text": "Green traffic light detected on your left. Check before proceeding.",
+    "direction": "left",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "green traffic light:right": {
+    "file": "green_traffic_light_right.mp3",
+    "text": "Green traffic light detected on your right. Check before proceeding.",
+    "direction": "right",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  },
+  "green traffic light:ahead": {
+    "file": "green_traffic_light_ahead.mp3",
+    "text": "Green traffic light detected ahead. Check before proceeding.",
+    "direction": "ahead",
+    "voice": "coral",
+    "model": "gpt-4o-mini-tts"
+  }
+}

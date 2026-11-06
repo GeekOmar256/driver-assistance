@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VisionGuard - Traffic Sign Detection</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem("vg-theme");
+      if (saved === "light" || saved === "dark") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>VisionGuard</h1>
+        <p>Upload a video or use your webcam to detect road objects in real time.</p>
+      </div>
+      <div class="view-controls">
+        <label for="pageZoom">Widget zoom</label>
+        <input id="pageZoom" type="range" min="60" max="150" step="5" value="100">
+        <output id="pageZoomValue" for="pageZoom">100%</output>
+        <button id="fitPageBtn" type="button">Fit screen</button>
+        <button id="resetZoomBtn" type="button">Reset</button>
+        <button id="themeBtn" type="button" class="theme-toggle" aria-label="Toggle light/dark mode">
+        <span id="themeIcon">&#9728;</span> <span id="themeLabel">Light</span>
+      </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside id="controlsColumn" class="controls-column">
+      <div class="panel" data-card="upload">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Upload a video</h2>
+        </div>
+        <div class="panel-body">
+          <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="video" accept=".mp4,.avi,.mov,.mkv" required>
+            <button type="submit">Process Video</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="panel" data-card="webcam">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Use your webcam</h2>
+        </div>
+        <div class="panel-body">
+          <div class="btn-row">
+            <button id="webcamBtn" type="button">Start Webcam</button>
+            <button id="stopBtn" type="button" disabled>Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-card="classes">
+        <div class="panel-handle" draggable="true">
+          <span class="drag-dots" aria-hidden="true">&#8942;&#8942;</span>
+          <h2>Detect classes</h2>
+        </div>
+        <div class="panel-body">
+          <label for="modelSelect">Detection method</label>
+          <select id="modelSelect" disabled><option>Loading models...</option></select>
+          <p id="modelMessage" role="status"></p>
+          <label for="resolutionSelect">Detection resolution</label>
+          <select id="resolutionSelect"><option value="auto">Auto ({{ auto_image_size }})</option><option value="640">640 — faster / close objects</option><option value="960">960 — balanced</option><option value="1280">1280 — distant objects / slower</option></select>
+          <label for="confidenceSlider">Minimum confidence: <output id="confidenceValue" for="confidenceSlider">{{ default_confidence }}%</output></label>
+          <input id="confidenceSlider" type="range" min="1" max="100" step="1" value="{{ default_confidence }}" aria-describedby="confidenceHelp">
+          <p id="confidenceHelp">Lower values detect more objects; higher values require more certainty. Click Apply to update the current stream (videos restart).</p>
+          <div class="class-actions">
+            <button id="selectAllBtn" type="button" class="link-btn">Select all</button>
+            <button id="selectNoneBtn" type="button" class="link-btn">Clear</button>
+          </div>
+          <div id="classList" class="class-list">Loading classes...</div>
+          <button id="applyBtn" type="button">Apply to current stream</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="video-column">
+      <div class="video-panel">
+        <div class="video-toolbar">
+          <button id="playPauseBtn" type="button" class="icon-btn" disabled aria-label="Play">
+            <span id="playPauseIcon">&#9654;</span>
+          </button>
+          <button id="replayBtn" type="button" class="icon-btn" disabled aria-label="Replay video" title="Replay from the start">
+            <span>&#8635;</span>
+          </button>
+          <span id="streamStatus" class="stream-status">No stream active</span>
+        </div>
+        <div class="stream-container">
+          <img id="stream" alt="Detection output will appear here">
+        </div>
+      </div>
+
+      <div class="alerts-panel" id="alertsPanel">
+        <div class="alerts-toolbar">
+          <h2>Driver Alerts</h2>
+          <button id="soundBtn" type="button" aria-pressed="false">Enable sound</button>
+          <label>Volume <input id="alertVolume" type="range" min="0" max="1" step="0.1" value="0.8"></label>
+          <label>Alert size <select id="alertSize"><option value="normal">Normal</option><option value="large">Large</option><option value="extra">Extra large</option></select></label>
+        </div>
+        <p id="audioStatus" role="status" hidden></p>
+        <div id="alertsList" class="alerts-list">
+          <div class="alert-item alert-empty">
+            <span class="alert-icon">&#9989;</span>
+            <span>No recent detections</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const stream = document.getElementById("stream");
+    const webcamBtn = document.getElementById("webcamBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const applyBtn = document.getElementById("applyBtn");
+    const classList = document.getElementById("classList");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const selectNoneBtn = document.getElementById("selectNoneBtn");
+    const themeBtn = document.getElementById("themeBtn");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const playPauseIcon = document.getElementById("playPauseIcon");
+    const replayBtn = document.getElementById("replayBtn");
+    const streamStatus = document.getElementById("streamStatus");
+    const alertsList = document.getElementById("alertsList");
+    const controlsColumn = document.getElementById("controlsColumn");
+    const modelSelect = document.getElementById("modelSelect");
+    const confidenceSlider = document.getElementById("confidenceSlider");
+    const resolutionSelect = document.getElementById("resolutionSelect");
+    try {
+      const savedResolution = localStorage.getItem("vg-resolution");
+      if (["auto", "640", "960", "1280"].includes(savedResolution)) resolutionSelect.value = savedResolution;
+    } catch (e) {}
+    resolutionSelect.addEventListener("change", function () {
+      try { localStorage.setItem("vg-resolution", resolutionSelect.value); } catch (e) {}
+    });
+    const confidenceValue = document.getElementById("confidenceValue");
+    try {
+      const saved = Number(localStorage.getItem("vg-confidence"));
+      if (Number.isInteger(saved) && saved >= 1 && saved <= 100) confidenceSlider.value = saved;
+    } catch (e) {}
+    function updateConfidence() {
+      confidenceValue.value = confidenceSlider.value + "%";
+      confidenceSlider.setAttribute("aria-valuetext", confidenceSlider.value + " percent");
+      try { localStorage.setItem("vg-confidence", confidenceSlider.value); } catch (e) {}
+    }
+    updateConfidence();
+    confidenceSlider.addEventListener("input", updateConfidence);
+    let selectedModel = {{ default_model | tojson }};
+    let modelLoading = false;
+    const uploadedFilename = {{ (uploaded_filename or '')|tojson }};
+
+    let currentMode = null; // "webcam" | "video"
+    let isPaused = false;
+    let videoEnded = false;
+    let pollTimer = null;
+    let pollGeneration = 0;
+    let streamId = "";
+    let endAlertTimer = null;
+
+    // Keep view controls outside the scaled widgets so they remain reachable.
+    const pageLayout = document.querySelector("main.layout");
+    const pageZoom = document.getElementById("pageZoom");
+    const pageZoomValue = document.getElementById("pageZoomValue");
+    let fitPage = false;
+    function setPageZoom(value) {
+      const percent = Math.max(60, Math.min(150, Math.round(Number(value) / 5) * 5 || 100));
+      pageLayout.style.zoom = percent / 100;
+      pageLayout.classList.toggle("compact-layout", window.innerWidth / (percent / 100) <= 900);
+      pageZoom.value = percent;
+      pageZoomValue.value = percent + "%";
+      pageZoom.setAttribute("aria-valuetext", percent + " percent");
+      document.getElementById("fitPageBtn").setAttribute("aria-pressed", String(fitPage));
+      try {
+        localStorage.setItem("vg-page-zoom", percent);
+        localStorage.setItem("vg-page-fit", String(fitPage));
+      } catch (e) {}
+    }
+    function fitWidgetsToScreen() {
+      pageLayout.style.zoom = 1;
+      pageLayout.classList.toggle("compact-layout", window.innerWidth <= 900);
+      const available = Math.max(1, window.innerHeight - pageLayout.getBoundingClientRect().top - 16);
+      const naturalHeight = pageLayout.getBoundingClientRect().height;
+      setPageZoom(Math.min(100, Math.floor(available / Math.max(1, naturalHeight) * 20) * 5));
+    }
+    let savedPageZoom = 100;
+    try {
+      savedPageZoom = Number(localStorage.getItem("vg-page-zoom")) || 100;
+      fitPage = localStorage.getItem("vg-page-fit") === "true";
+    } catch (e) {}
+    setPageZoom(savedPageZoom);
+    if (fitPage) requestAnimationFrame(fitWidgetsToScreen);
+    pageZoom.addEventListener("input", function () { fitPage = false; setPageZoom(pageZoom.value); });
+    document.getElementById("fitPageBtn").addEventListener("click", function () {
+      fitPage = true; fitWidgetsToScreen();
+    });
+    document.getElementById("resetZoomBtn").addEventListener("click", function () {
+      fitPage = false; setPageZoom(100);
+    });
+    window.addEventListener("resize", function () {
+      if (fitPage) fitWidgetsToScreen(); else setPageZoom(pageZoom.value);
+    });
+    stream.addEventListener("load", function () { if (fitPage) fitWidgetsToScreen(); });
+
+    // ---- Theme ----
+    function currentTheme() {
+      return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    }
+
+    function applyThemeButton() {
+      if (currentTheme() === "light") {
+        themeIcon.textContent = "☽";
+        themeLabel.textContent = "Dark";
+      } else {
+        themeIcon.textContent = "☀";
+        themeLabel.textContent = "Light";
+      }
+    }
+
+    themeBtn.addEventListener("click", function () {
+      const next = currentTheme() === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("vg-theme", next); } catch (e) {}
+      applyThemeButton();
+    });
+
+    applyThemeButton();
+
+    // ---- Draggable control cards ----
+    let dragEl = null;
+
+    function getDragAfterElement(container, y) {
+      const panels = Array.from(container.querySelectorAll(".panel:not(.dragging)"));
+      return panels.reduce(function (closest, child) {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        }
+        return closest;
+      }, { offset: -Infinity, element: null }).element;
+    }
+
+    function saveCardOrder() {
+      const order = Array.from(controlsColumn.querySelectorAll(".panel")).map(function (p) {
+        return p.dataset.card;
+      });
+      try { localStorage.setItem("vg-card-order", JSON.stringify(order)); } catch (e) {}
+    }
+
+    function restoreCardOrder() {
+      try {
+        const order = JSON.parse(localStorage.getItem("vg-card-order") || "null");
+        if (!order) return;
+        order.forEach(function (key) {
+          const el = controlsColumn.querySelector('[data-card="' + key + '"]');
+          if (el) controlsColumn.appendChild(el);
+        });
+      } catch (e) {}
+    }
+
+    restoreCardOrder();
+
+    controlsColumn.querySelectorAll(".panel-handle").forEach(function (handle) {
+      handle.addEventListener("dragstart", function () {
+        dragEl = handle.closest(".panel");
+        dragEl.classList.add("dragging");
+      });
+      handle.addEventListener("dragend", function () {
+        if (dragEl) dragEl.classList.remove("dragging");
+        dragEl = null;
+        saveCardOrder();
+      });
+    });
+
+    controlsColumn.addEventListener("dragover", function (e) {
+      if (!dragEl) return;
+      e.preventDefault();
+      const after = getDragAfterElement(controlsColumn, e.clientY);
+      if (after == null) {
+        controlsColumn.appendChild(dragEl);
+      } else {
+        controlsColumn.insertBefore(dragEl, after);
+      }
+    });
+
+    // ---- Class selection ----
+    function selectedClasses() {
+      return Array.from(classList.querySelectorAll("input[type=checkbox]:checked"))
+        .map(function (cb) { return cb.value; });
+    }
+
+    function saveSelection() {
+      try { localStorage.setItem("vg-classes-" + selectedModel, JSON.stringify(selectedClasses())); } catch (e) {}
+    }
+
+    function loadSavedSelection() {
+      try {
+        const raw = localStorage.getItem("vg-classes-" + selectedModel);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function renderClasses(names) {
+      const saved = loadSavedSelection();
+      classList.innerHTML = "";
+      names.forEach(function (name) {
+        const id = "cls-" + name.replace(/\s+/g, "_");
+        const checked = saved ? saved.indexOf(name) !== -1 : true;
+        const wrapper = document.createElement("label");
+        wrapper.className = "class-item";
+        wrapper.innerHTML =
+          '<input type="checkbox" id="' + id + '" value="' + name + '"' + (checked ? " checked" : "") + '> ' +
+          '<span>' + name + '</span>';
+        classList.appendChild(wrapper);
+      });
+      classList.addEventListener("change", saveSelection);
+      saveSelection();
+      if (fitPage) requestAnimationFrame(fitWidgetsToScreen);
+    }
+
+    function loadClasses() {
+      return fetch("/api/classes?model=" + encodeURIComponent(selectedModel))
+        .then(function (r) { if (!r.ok) throw new Error("Model could not be loaded"); return r.json(); })
+        .then(renderClasses);
+    }
+
+    fetch("/api/models")
+      .then(function (r) { return r.json(); })
+      .then(function (models) {
+        modelSelect.replaceChildren();
+        models.forEach(function (model) {
+          const option = new Option(model.label + (model.available ? "" : " (unavailable)"), model.id);
+          option.disabled = !model.available;
+          modelSelect.add(option);
+        });
+        modelSelect.value = selectedModel;
+        modelSelect.disabled = false;
+        return loadClasses();
+      }).then(function () {
+        if (uploadedFilename) {
+          startVideoStream();
+        }
+      })
+      .catch(function () { classList.textContent = "Could not load class list."; });
+
+    modelSelect.addEventListener("change", async function () {
+      const mode = currentMode;
+      stopStream();
+      selectedModel = modelSelect.value;
+      modelLoading = true;
+      modelSelect.disabled = true;
+      classList.replaceChildren();
+      document.getElementById("modelMessage").textContent = "Loading model...";
+      try {
+        await loadClasses();
+        modelLoading = false;
+        document.getElementById("modelMessage").textContent = "Model ready";
+        if (mode === "webcam") startWebcam();
+        if (mode === "video") startVideoStream();
+      } catch (e) {
+        document.getElementById("modelMessage").textContent = "Could not load model. Select another model.";
+      } finally { modelSelect.disabled = false; }
+    });
+
+    selectAllBtn.addEventListener("click", function () {
+      classList.querySelectorAll("input[type=checkbox]").forEach(function (cb) { cb.checked = true; });
+      saveSelection();
+    });
+
+    selectNoneBtn.addEventListener("click", function () {
+      classList.querySelectorAll("input[type=checkbox]").forEach(function (cb) { cb.checked = false; });
+      saveSelection();
+    });
+
+    function classesQueryParam() {
+      return "model=" + encodeURIComponent(selectedModel) + "&resolution=" + resolutionSelect.value + "&confidence=" + (Number(confidenceSlider.value) / 100) + "&classes=" + encodeURIComponent(selectedClasses().join(","));
+    }
+
+    // ---- Driver alerts ----
+    const soundBtn = document.getElementById("soundBtn");
+    const audioStatus = document.getElementById("audioStatus");
+    const volume = document.getElementById("alertVolume");
+    const alertSize = document.getElementById("alertSize");
+    const alertAudio = new Audio();
+    let soundEnabled = false;
+    let audioItems = [];
+    const lastPlayed = new Map();
+    let audioBusy = false;
+    let lastAudioTime = 0;
+
+    function resetAlertAudio() {
+      alertAudio.pause();
+      alertAudio.removeAttribute("src");
+      audioBusy = false;
+      audioItems = [];
+      lastPlayed.clear();
+      lastAudioTime = 0;
+    }
+
+    function updateAudioAlerts(items) {
+      audioItems = items;
+      if (!soundEnabled || isPaused || videoEnded || !currentMode || audioBusy) return;
+      const now = Date.now();
+      if (now - lastAudioTime < 3000) return;
+      // Signals are first in the server's priority order; one track at a time.
+      const next = items.find(a => a.audio_url && now - (lastPlayed.get(a.class_name + ":" + a.direction) || 0) >= 12000);
+      if (!next) return;
+      audioBusy = true;
+      lastPlayed.set(next.class_name + ":" + next.direction, now);
+      lastAudioTime = now;
+      alertAudio.src = next.audio_url;
+      alertAudio.volume = Number(volume.value);
+      alertAudio.play().catch(function () {
+        audioBusy = false;
+        soundEnabled = false;
+        soundBtn.textContent = "Enable sound";
+        soundBtn.setAttribute("aria-pressed", "false");
+        audioStatus.textContent = "Audio unavailable or blocked. Click Enable sound to retry.";
+        audioStatus.hidden = false;
+      });
+    }
+    alertAudio.addEventListener("ended", function () { audioBusy = false; });
+    soundBtn.addEventListener("click", function () {
+      soundEnabled = !soundEnabled;
+      soundBtn.setAttribute("aria-pressed", String(soundEnabled));
+      soundBtn.textContent = soundEnabled ? "Mute sound" : "Enable sound";
+      audioStatus.textContent = "";
+      audioStatus.hidden = true;
+      if (!soundEnabled) resetAlertAudio();
+      else {
+        // A real user gesture unlocks media playback, including uploaded-video autoplay.
+        alertAudio.src = "/static/audio/sound_enabled.mp3";
+        alertAudio.volume = Number(volume.value);
+        audioBusy = true;
+        alertAudio.play().catch(function () {
+          audioBusy = false;
+          audioStatus.textContent = "Could not play audio. Check your browser audio settings.";
+          audioStatus.hidden = false;
+        });
+      }
+    });
+    volume.addEventListener("input", function () { alertAudio.volume = Number(volume.value); });
+    function applyAlertSize() {
+      document.getElementById("alertsPanel").dataset.size = alertSize.value;
+      try { localStorage.setItem("vg-alert-size", alertSize.value); } catch (e) {}
+    }
+    try { alertSize.value = localStorage.getItem("vg-alert-size") || "normal"; } catch (e) {}
+    applyAlertSize();
+    alertSize.addEventListener("change", applyAlertSize);
+
+    function renderAlerts(items) {
+      if (!items.length) {
+        alertsList.innerHTML =
+          '<div class="alert-item alert-empty"><span class="alert-icon">✅</span>' +
+          '<span>No recent detections</span></div>';
+        return;
+      }
+      alertsList.innerHTML = items.map(function (a) {
+        return '<div class="alert-item ' + a.kind + '">' +
+          '<span class="alert-icon">' + a.icon + '</span><span>' + a.text +
+          (a.recent ? ' <small class="recent-alert">Recently detected</small>' : '') + '</span></div>';
+      }).join("");
+    }
+
+    function pollAlerts() {
+      if (isPaused || videoEnded || !currentMode) return;
+      const mode = currentMode;
+      const generation = pollGeneration;
+      return fetch("/api/latest_detections?stream_id=" + encodeURIComponent(streamId))
+        .then(function (r) { return r.json(); })
+        .then(function (items) { if (generation !== pollGeneration || mode !== currentMode || isPaused || videoEnded) return; renderAlerts(items); updateAudioAlerts(items); })
+        .catch(function () {});
+    }
+
+    function pollStreamStatus() {
+      if (currentMode !== "video" || videoEnded) return;
+      const generation = pollGeneration;
+      return fetch("/api/stream_status?stream_id=" + encodeURIComponent(streamId))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (generation === pollGeneration && data.started && !data.active && currentMode === "video" && !videoEnded) {
+            handleVideoEnded();
+          }
+        })
+        .catch(function () {});
+    }
+
+    function startPolling() {
+      stopPolling();
+      const generation = pollGeneration;
+      let busy = false;
+      async function poll() {
+        if (busy || generation !== pollGeneration) return;
+        busy = true;
+        try {
+          await pollAlerts();
+          if (generation === pollGeneration) await pollStreamStatus();
+        } finally { busy = false; }
+      }
+      pollTimer = setInterval(poll, 250);
+      poll();
+    }
+
+    function stopPolling() {
+      pollGeneration++;
+      if (endAlertTimer) { clearTimeout(endAlertTimer); endAlertTimer = null; }
+      resetAlertAudio();
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      renderAlerts([]);
+    }
+
+    function handleVideoEnded() {
+      videoEnded = true;
+      isPaused = false;
+      playPauseBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "Video ended - click Replay to watch again";
+      const generation = pollGeneration;
+      endAlertTimer = setTimeout(function () {
+        if (generation === pollGeneration) { renderAlerts([]); resetAlertAudio(); }
+      }, 3000);
+    }
+
+    // ---- Play / pause ----
+    function setPlayPauseUI() {
+      playPauseIcon.textContent = isPaused ? "▶" : "⏸";
+      playPauseBtn.setAttribute("aria-label", isPaused ? "Play" : "Pause");
+    }
+
+    playPauseBtn.addEventListener("click", function () {
+      fetch("/api/toggle_pause", { method: "POST" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          isPaused = data.paused;
+          if (isPaused) resetAlertAudio();
+          setPlayPauseUI();
+          streamStatus.textContent = isPaused
+            ? "Paused"
+            : (currentMode === "webcam" ? "Live (webcam)" : "Playing video");
+        });
+    });
+
+    // ---- Streams ----
+    function startWebcam() {
+      if (modelLoading) return;
+      currentMode = "webcam";
+      isPaused = false;
+      videoEnded = false;
+      streamId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      stream.src = "/webcam_feed?" + classesQueryParam() + "&stream_id=" + streamId;
+      webcamBtn.disabled = true;
+      stopBtn.disabled = false;
+      playPauseBtn.disabled = false;
+      replayBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "Live (webcam)";
+      startPolling();
+    }
+
+    function startVideoStream() {
+      if (modelLoading) return;
+      currentMode = "video";
+      isPaused = false;
+      videoEnded = false;
+      streamId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      stream.src = "/video_feed/" + uploadedFilename + "?" + classesQueryParam() + "&stream_id=" + streamId;
+      stopBtn.disabled = false;
+      playPauseBtn.disabled = false;
+      replayBtn.disabled = false;
+      setPlayPauseUI();
+      streamStatus.textContent = "Playing video";
+      startPolling();
+    }
+
+    function stopStream() {
+      currentMode = null;
+      isPaused = false;
+      videoEnded = false;
+      navigator.sendBeacon ? navigator.sendBeacon("/api/resume") : fetch("/api/resume", { method: "POST" });
+      stream.src = "";
+      webcamBtn.disabled = false;
+      stopBtn.disabled = true;
+      playPauseBtn.disabled = true;
+      replayBtn.disabled = true;
+      setPlayPauseUI();
+      streamStatus.textContent = "No stream active";
+      stopPolling();
+    }
+
+    webcamBtn.addEventListener("click", startWebcam);
+    stopBtn.addEventListener("click", stopStream);
+    replayBtn.addEventListener("click", function () {
+      if (uploadedFilename) startVideoStream();
+    });
+
+    applyBtn.addEventListener("click", function () {
+      if (currentMode === "webcam") {
+        startWebcam();
+      } else if (currentMode === "video" && uploadedFilename) {
+        startVideoStream();
+      }
+    });
+
+    window.addEventListener("beforeunload", function () {
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/resume");
+    });
+  </script>
+</body>
+</html>
