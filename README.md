@@ -1,10 +1,35 @@
-# VisionGuard for Raspberry Pi
+# VisionGuard Tkinter for Raspberry Pi
 
 This deployment branch targets Raspberry Pi 5 with 64-bit Raspberry Pi OS Bookworm or Trixie. Debian 13 Trixie ARM64 with Python 3.13 is also permitted for installation and runtime validation; full operation on that OS must be verified on the device. It bundles the pretrained YOLOv8n checkpoint, the nine-class Roboflow-trained checkpoint, and local alert audio. No API key is required. Use one browser viewer at a time.
 
 The standard two-stage mode is the default. Both two-stage modes expose `person` as a selectable class. The pretrained model detects people directly and sends their image direction to the visual and audio alerts; the crop recognizer handles signs and light colors. Generic unclassified traffic lights are suppressed in both two-stage modes. Direction describes image position, not distance or a collision prediction.
 
-## Install and start
+## Tkinter desktop installation
+
+This separate branch adds a native GUI for a screen connected to the Pi. The Flask web app remains available through its original launcher.
+
+Run from a terminal inside the Pi graphical desktop session (X11 or Wayland with Tk/XWayland support):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git
+git clone --single-branch --branch codex/raspberry-pi-tkinter https://github.com/GeekOmar256/driver-assistance.git ~/visionguard-tkinter
+cd ~/visionguard-tkinter
+bash scripts/install-tkinter-pi.sh
+bash scripts/run-tkinter-pi.sh
+```
+
+- **Driver alerts** is the first tab: large, high contrast directional alerts. People, red lights, stop signs and no entry use a red background. Up to three priority alerts appear together; additional alerts are counted. Brief detections remain visible for the configured hold time.
+- **Video / Live** displays annotated frames from a video file, USB/CSI camera or RTSP/HTTP stream. Frames preserve aspect ratio and resize with the window. Detection continues while another tab is selected.
+- **Settings** contains all four detection methods, model-specific class checkboxes, confidence, inference size, source type/path/URL, alert font size, retention, sound and fullscreen. Standard two-stage is the default, including person detection. Settings are session-only; use Apply settings, and Stop/Start after changing the source. Changing the model stops playback and refreshes the class list.
+
+Start, Pause/Resume and Stop are always available below the tabs. Escape exits fullscreen. Closing the window exits the application. Video playback is paced at its source rate when inference can keep up; CPU inference may make it slower. A disconnected or exhausted source clears alerts. Network open/read operations have a five-second timeout where supported by OpenCV's FFmpeg backend.
+
+Sound uses the existing directional recordings through `ffplay` (installed with FFmpeg), plays one track at a time, and repeats a class/direction no more often than every six seconds. Select the connected HDMI/USB audio output in the OS. No voice generation or API key is needed. Run this GUI on the connected screen; a headless SSH session without a display cannot open Tk. CSI availability on plain Debian still depends on the installed camera stack.
+
+Validation: software tests and a local desktop smoke check cover default model loading, class selection, real CPU inference on a generated video, and all three tabs. The alert screenshot fixture is illustrative. Pi display, touch, live camera, stream server and audio hardware must be checked on the device.
+
+## Optional web app: install and start
 
 ```bash
 sudo apt-get update
