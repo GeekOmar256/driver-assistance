@@ -1,6 +1,6 @@
 # VisionGuard for Raspberry Pi
 
-This deployment branch targets Raspberry Pi 5 with 64-bit Raspberry Pi OS Bookworm or Trixie. It bundles the pretrained YOLOv8n checkpoint, the nine-class Roboflow-trained checkpoint, and local alert audio. No API key is required. Use one browser viewer at a time.
+This deployment branch targets Raspberry Pi 5 with 64-bit Raspberry Pi OS Bookworm or Trixie. Debian 13 Trixie ARM64 with Python 3.13 is also permitted for installation and runtime validation; full operation on that OS must be verified on the device. It bundles the pretrained YOLOv8n checkpoint, the nine-class Roboflow-trained checkpoint, and local alert audio. No API key is required. Use one browser viewer at a time.
 
 The standard two-stage mode is the default. Both two-stage modes expose `person` as a selectable class. The pretrained model detects people directly and sends their image direction to the visual and audio alerts; the crop recognizer handles signs and light colors. Generic unclassified traffic lights are suppressed in both two-stage modes. Direction describes image position, not distance or a collision prediction.
 
@@ -31,7 +31,7 @@ The webcam button opens a camera attached to the **Pi**, not the remote browser.
 VISIONGUARD_CAMERA=/dev/video2 bash scripts/run-pi.sh
 ```
 
-For a Raspberry Pi Camera Module connected by CSI, check that `rpicam-hello --list-cameras` detects it, then install the OS bindings and select the CSI backend:
+On plain Debian, first check that the Raspberry Pi camera tools and `python3-picamera2` are available from the configured OS repositories. If unavailable, use USB or video testing and report CSI as pending; do not add external apt repositories. For a Raspberry Pi Camera Module connected by CSI with the camera stack available, check that `rpicam-hello --list-cameras` detects it, then install the OS bindings and select the CSI backend:
 
 ```bash
 sudo apt-get install -y python3-picamera2
