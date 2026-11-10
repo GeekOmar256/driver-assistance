@@ -142,7 +142,7 @@ class VisionGuard:
         self.hold = tk.DoubleVar(value=3)
         self.resolution = tk.StringVar(value="640")
         self.source_kind = tk.StringVar(value="camera")
-        self.source = tk.StringVar(value=config.CAMERA_SOURCE)
+        self.source = tk.StringVar(value="picamera2")
         self.model = tk.StringVar(value=config.MODEL_OPTIONS[config.DEFAULT_MODEL]["label"])
         self.class_vars = {}
         self.audio_process = None
@@ -204,11 +204,13 @@ class VisionGuard:
         ttk.Label(panel, text="Inference size").grid(row=2, column=0, sticky="w")
         ttk.Combobox(panel, state="readonly", textvariable=self.resolution, values=["640","960","1280"]).grid(row=2, column=1, sticky="ew", pady=8)
         ttk.Label(panel, text="Input type").grid(row=3, column=0, sticky="w")
-        ttk.Combobox(panel, state="readonly", textvariable=self.source_kind, values=["camera", "video", "stream"]).grid(row=3, column=1, sticky="ew")
+        source_selector = ttk.Combobox(panel, state="readonly", textvariable=self.source_kind, values=["camera", "video", "stream"])
+        source_selector.grid(row=3, column=1, sticky="ew")
+        source_selector.bind("<<ComboboxSelected>>", self.source_changed)
         ttk.Label(panel, text="Camera / file / stream URL").grid(row=4, column=0, sticky="w")
         ttk.Entry(panel, textvariable=self.source).grid(row=4, column=1, sticky="ew", pady=8)
         ttk.Button(panel, text="Browse video…", command=self.browse).grid(row=5, column=1, sticky="w")
-        ttk.Label(panel, text="Camera: 0, /dev/video2 or picamera2. Stream: RTSP / HTTP URL.", wraplength=540).grid(row=6,column=0,columnspan=2,sticky="w",pady=8)
+        ttk.Label(panel, text="Camera default: picamera2. USB: 0 or /dev/video2. Stream: RTSP / HTTP URL.", wraplength=540).grid(row=6,column=0,columnspan=2,sticky="w",pady=8)
         ttk.Label(panel, text="Alert text size").grid(row=7,column=0,sticky="w")
         ttk.Spinbox(panel, from_=24, to=100, textvariable=self.alert_size).grid(row=7,column=1,sticky="ew")
         ttk.Label(panel, text="Hold brief alerts (seconds)").grid(row=8,column=0,sticky="w",pady=8)
@@ -219,6 +221,10 @@ class VisionGuard:
         self.class_panel.grid(row=11,column=0,columnspan=2,sticky="ew")
         ttk.Button(panel,text="Apply settings",command=self.apply).grid(row=12,column=0,columnspan=2,pady=12)
         ttk.Label(panel,text="Changing model stops playback. Apply source changes by stopping and starting. Direction is image position; it does not estimate distance.",wraplength=560).grid(row=13,column=0,columnspan=2,sticky="w")
+
+    def source_changed(self, event=None):
+        if self.source_kind.get() == "camera":
+            self.source.set("picamera2")
 
     def browse(self):
         path = filedialog.askopenfilename(filetypes=[("Video", "*.mp4 *.avi *.mov *.mkv"), ("All files", "*")])
